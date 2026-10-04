@@ -1,0 +1,1 @@
+Deployment trigger for new homepage hero image.
