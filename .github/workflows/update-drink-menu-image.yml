@@ -1,0 +1,49 @@
+name: Update drink menu image
+on:
+  push:
+    paths:
+      - ".github/workflows/update-drink-menu-image.yml"
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use new combined cocktail image
+        shell: bash
+        run: |
+          set -e
+          test -f "assets/drinksnew.jpg"
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path("index.html")
+          s=p.read_text(encoding="utf-8")
+          replacement='''<section class="photo-preview-section" id="drink-visual-preview">
+          <span class="eyebrow">Benjamin's Bar</span>
+          <div class="section-head"><div class="section-head-icon">🍸</div><div><h2>Cocktails by Night</h2></div></div>
+          <div class="photo-preview-grid drinks-single" style="grid-template-columns:1fr !important;">
+            <figure class="photo-card tall" style="grid-column:1/-1;min-height:420px;">
+              <img alt="Benjamin's cocktails with New York skyline" loading="lazy" src="assets/drinksnew.jpg">
+            </figure>
+          </div>
+          </section>'''
+          pat=r'<section class="photo-preview-section" id="drink-visual-preview">.*?</section>'
+          s2,n=re.subn(pat,replacement,s,count=1,flags=re.S)
+          if n!=1:
+              raise SystemExit(f"Expected one drink photo section, found {n}")
+          p.write_text(s2,encoding="utf-8")
+          PY
+      - name: Commit website update
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No changes needed."
+          else
+            git commit -m "Use new combined cocktail image"
+            git push
+          fi
