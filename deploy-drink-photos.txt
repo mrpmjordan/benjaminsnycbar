@@ -1,0 +1,1 @@
+Deployment trigger after replacing old drink photo with new NYC cocktail images.
