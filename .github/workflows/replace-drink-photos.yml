@@ -1,0 +1,40 @@
+name: Replace drink photos
+on:
+  push:
+    paths:
+      - ".github/workflows/replace-drink-photos.yml"
+permissions:
+  contents: write
+jobs:
+  replace:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Replace old drink photo with NYC cocktail photos
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path("index.html")
+          s=p.read_text(encoding="utf-8")
+          new='''<section class="photo-preview-section" id="drink-visual-preview">
+          <span class="eyebrow">Benjamin's Bar</span>
+          <div class="section-head"><div class="section-head-icon">🍸</div><div><h2>Cocktails by Night</h2></div></div>
+          <div class="photo-preview-grid drinks">
+            <figure class="photo-card tall"><img alt="Benjamin's cocktail with New York skyline" loading="lazy" src="assets/benjamins-drink-nyc-1.webp"></figure>
+            <figure class="photo-card tall"><img alt="Benjamin's cocktail bar with New York skyline" loading="lazy" src="assets/benjamins-drink-nyc-2.webp"></figure>
+          </div>
+          </section>'''
+          pat=r'<section class="photo-preview-section" id="drink-visual-preview">.*?</section>'
+          s2,n=re.subn(pat,new,s,count=1,flags=re.S)
+          if n!=1:
+              raise SystemExit(f"Expected 1 drink photo section, found {n}")
+          p.write_text(s2,encoding="utf-8")
+          PY
+      - name: Commit website update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Replace drink photos with NYC cocktail images" || exit 0
+          git push
