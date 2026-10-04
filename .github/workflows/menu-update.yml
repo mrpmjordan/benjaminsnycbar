@@ -1,0 +1,39 @@
+name: One-time menu update
+on:
+  push:
+    paths:
+      - ".github/workflows/menu-update.yml"
+permissions:
+  contents: write
+jobs:
+  update-menu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add New York Strip Steak
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path("index.html")
+          s = p.read_text(encoding="utf-8")
+          item = '<article class="food-card"><div><h3 class="food-name">New York Strip Steak</h3><p class="food-desc">420 g de bife de chorizo con papa al horno y salsa Peter Luger.</p></div><div class="food-price" data-price="new_york_strip_steak">$55.000</div></article>'
+          if "data-price=\"new_york_strip_steak\"" not in s:
+              needle = '<article class="food-card"><div><h3 class="food-name">NYC Strip Steak Sandwich</h3><p class="food-desc">Bife de chorizo, morrones, mayonesa y pan ciabatta.</p></div><div class="food-price" data-price="nyc_strip_steak_sandwich">$35.000</div></article>'
+              if needle not in s:
+                  raise SystemExit("Target menu item not found")
+              s = s.replace(needle, item + "\n" + needle, 1)
+              p.write_text(s, encoding="utf-8")
+          PY
+      - name: Commit update
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No menu changes needed."
+          else
+            git commit -m "Add New York Strip Steak to food menu"
+            git push
+          fi
