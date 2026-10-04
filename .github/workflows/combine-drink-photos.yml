@@ -15,9 +15,9 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq imagemagick
-          magick assets/benjamins-drink-nyc-1.webp -resize 900x900^ -gravity center -extent 900x900 /tmp/a.jpg
-          magick assets/benjamins-drink-nyc-2.webp -resize 900x900^ -gravity center -extent 900x900 /tmp/b.jpg
-          magick /tmp/a.jpg /tmp/b.jpg +append -quality 88 assets/benjamins-cocktails-combined.jpg
+          convert assets/benjamins-drink-nyc-1.webp -resize 900x900^ -gravity center -extent 900x900 /tmp/a.jpg
+          convert assets/benjamins-drink-nyc-2.webp -resize 900x900^ -gravity center -extent 900x900 /tmp/b.jpg
+          convert /tmp/a.jpg /tmp/b.jpg +append -quality 88 assets/benjamins-cocktails-combined.jpg
       - name: Use combined image on website
         shell: bash
         run: |
