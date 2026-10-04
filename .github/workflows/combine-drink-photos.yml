@@ -1,0 +1,49 @@
+name: Combine drink photos
+on:
+  push:
+    paths:
+      - ".github/workflows/combine-drink-photos.yml"
+permissions:
+  contents: write
+jobs:
+  combine:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build one combined cocktail image
+        shell: bash
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq imagemagick
+          magick assets/benjamins-drink-nyc-1.webp -resize 900x900^ -gravity center -extent 900x900 /tmp/a.jpg
+          magick assets/benjamins-drink-nyc-2.webp -resize 900x900^ -gravity center -extent 900x900 /tmp/b.jpg
+          magick /tmp/a.jpg /tmp/b.jpg +append -quality 88 assets/benjamins-cocktails-combined.jpg
+      - name: Use combined image on website
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path("index.html")
+          s=p.read_text(encoding="utf-8")
+          new='''<section class="photo-preview-section" id="drink-visual-preview">
+          <span class="eyebrow">Benjamin's Bar</span>
+          <div class="section-head"><div class="section-head-icon">🍸</div><div><h2>Cocktails by Night</h2></div></div>
+          <div class="photo-preview-grid drinks single-clean">
+            <figure class="photo-card tall"><img alt="Benjamin's cocktails with New York skyline" loading="lazy" src="assets/benjamins-cocktails-combined.jpg"></figure>
+          </div>
+          </section>'''
+          pat=r'<section class="photo-preview-section" id="drink-visual-preview">.*?</section>'
+          s2,n=re.subn(pat,new,s,count=1,flags=re.S)
+          if n != 1:
+              raise SystemExit(f"Expected one drink preview section, found {n}")
+          p.write_text(s2,encoding="utf-8")
+          PY
+      - name: Commit
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html assets/benjamins-cocktails-combined.jpg
+          git commit -m "Combine cocktail photos into one website image" || exit 0
+          git push
